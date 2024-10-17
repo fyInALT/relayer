@@ -29,11 +29,6 @@ var _ gogogrpc.ClientConn = &CosmosProvider{}
 
 var protoCodec = encoding.GetCodec(proto.Name)
 
-// It will call after encoding/proto 's init, so it will avoid `protoCodec` tobe null.
-func init() {
-	protoCodec = encoding.GetCodec(proto.Name)
-}
-
 // Invoke implements the grpc ClientConn.Invoke method
 func (cc *CosmosProvider) Invoke(ctx context.Context, method string, req, reply interface{}, opts ...grpc.CallOption) (err error) {
 	// Two things can happen here:
@@ -70,6 +65,10 @@ func (cc *CosmosProvider) Invoke(ctx context.Context, method string, req, reply 
 		return err
 	}
 
+	if protoCodec == nil {
+		protoCodec = encoding.GetCodec(proto.Name)
+	}
+
 	if err = protoCodec.Unmarshal(abciRes.Value, reply); err != nil {
 		return err
 	}
@@ -100,6 +99,10 @@ func (cc *CosmosProvider) NewStream(context.Context, *grpc.StreamDesc, string, .
 // to factorize code between client (Invoke) and server (RegisterGRPCServer)
 // gRPC handlers.
 func (cc *CosmosProvider) RunGRPCQuery(ctx context.Context, method string, req interface{}, md metadata.MD) (abci.ResponseQuery, metadata.MD, error) {
+	if protoCodec == nil {
+		protoCodec = encoding.GetCodec(proto.Name)
+	}
+
 	reqBz, err := protoCodec.Marshal(req)
 	if err != nil {
 		return abci.ResponseQuery{}, nil, err
