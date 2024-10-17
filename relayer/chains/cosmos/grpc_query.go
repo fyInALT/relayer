@@ -29,6 +29,11 @@ var _ gogogrpc.ClientConn = &CosmosProvider{}
 
 var protoCodec = encoding.GetCodec(proto.Name)
 
+// It will call after encoding/proto 's init, so it will avoid `protoCodec` tobe null.
+func init() {
+	protoCodec = encoding.GetCodec(proto.Name)
+}
+
 // Invoke implements the grpc ClientConn.Invoke method
 func (cc *CosmosProvider) Invoke(ctx context.Context, method string, req, reply interface{}, opts ...grpc.CallOption) (err error) {
 	// Two things can happen here:
